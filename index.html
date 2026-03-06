@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flare Strategies — Infrastructure Provider</title>
+<meta name="description" content="FTSO, FDC & Validator infrastructure on Flare Network. Delegate FLR and earn rewards with 100% uptime.">
+<link rel="icon" type="image/png" href="logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #08090c;
+  --bg-card: #0f1116;
+  --bg-card-hover: #141720;
+  --bg-sidebar: #0b0d12;
+  --border: #1a1d27;
+  --border-light: #252836;
+  --text: #e4e6ed;
+  --text-dim: #6b7084;
+  --text-muted: #464960;
+  --accent: #eeff00;
+  --accent-dim: rgba(238,255,0,0.1);
+  --green: #00e676;
+  --green-dim: rgba(0,230,118,0.1);
+  --red: #ff4757;
+  --red-dim: rgba(255,71,87,0.1);
+  --cyan: #00d4ff;
+  --cyan-dim: rgba(0,212,255,0.1);
+  --orange: #ff9f43;
+  --orange-dim: rgba(255,159,67,0.1);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --sidebar-w: 240px;
+  --transition: 0.2s ease;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  line-height: 1.6;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ═══ SIDEBAR ═══ */
+.sidebar {
+  position: fixed;
+  left: 0; top: 0; bottom: 0;
+  width: var(--sidebar-w);
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+  transition: transform 0.3s ease;
+}
+
+.sidebar-brand {
+  padding: 24px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sidebar-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.sidebar-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.sidebar-brand-text {
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: -0.3px;
+}
+
+.sidebar-brand-text span {
+  display: block;
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--text-dim);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-top: 1px;
+}
+
+.sidebar-nav {
+  flex: 1;
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nav-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 16px 12px 8px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  color: var(--text-dim);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all var(--transition);
+  cursor: pointer;
+}
+
+.nav-item:hover { background: var(--bg-card-hover); color: var(--text); }
+.nav-item.active { background: var(--accent-dim); color: var(--accent); }
+.nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+.nav-item .badge {
+  margin-left: auto;
+  background: var(--green);
+  color: var(--bg);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 10px;
+}
+
+.sidebar-footer {
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+}
+
+.sidebar-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.status-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%,100% { opacity:1; box-shadow: 0 0 0 0 rgba(0,230,118,0.4); }
+  50% { opacity:0.8; box-shadow: 0 0 0 6px rgba(0,230,118,0); }
+}
+
+/* ═══ MOBILE ═══ */
+.mobile-toggle {
+  display: none;
+  position: fixed;
+  top: 16px; left: 16px;
+  z-index: 200;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  cursor: pointer;
+  color: var(--text);
+}
+
+.mobile-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(4px);
+  z-index: 90;
+}
+
+/* ═══ MAIN ═══ */
+.main { margin-left: var(--sidebar-w); min-height: 100vh; }
+
+.topbar {
+  position: sticky;
+  top: 0;
+  background: rgba(8,9,12,0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 32px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 50;
+}
+
+.topbar-left { display: flex; align-items: center; gap: 8px; }
+
+.network-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--green-dim);
+  color: var(--green);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 20px;
+}
+
+.network-badge::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+}
+
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+
+.topbar-right a {
+  color: var(--text-dim);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  transition: color var(--transition);
+}
+.topbar-right a:hover { color: var(--text); }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 20px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  border: none;
+  transition: all var(--transition);
+}
+
+.btn-primary { background: var(--accent); color: var(--bg); }
+.btn-primary:hover { background: #fff; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(238,255,0,0.2); }
+.btn-outline { background: transparent; border: 1px solid var(--border-light); color: var(--text); }
+.btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ═══ CONTENT ═══ */
+.content { padding: 28px 32px; max-width: 1200px; }
+section { margin-bottom: 40px; }
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.section-title { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
+.section-subtitle { font-size: 12px; color: var(--text-dim); font-weight: 500; }
+
+/* ═══ STATS ═══ */
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+
+.stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  transition: all var(--transition);
+}
+.stat-card:hover { border-color: var(--border-light); transform: translateY(-2px); }
+
+.stat-label { font-size: 12px; font-weight: 500; color: var(--text-dim); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.stat-label svg { width: 14px; height: 14px; }
+
+.stat-value { font-size: 28px; font-weight: 700; letter-spacing: -1px; font-family: 'JetBrains Mono', monospace; }
+.stat-value.green { color: var(--green); }
+.stat-value.accent { color: var(--accent); }
+.stat-value.cyan { color: var(--cyan); }
+.stat-value.orange { color: var(--orange); }
+
+.stat-change { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; margin-top: 6px; padding: 2px 8px; border-radius: 6px; }
+.stat-change.up { color: var(--green); background: var(--green-dim); }
+.stat-change.neutral { color: var(--text-dim); background: rgba(107,112,132,0.1); }
+
+/* ═══ PERFORMANCE ═══ */
+.perf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+.perf-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+}
+
+.perf-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.perf-card-title { font-size: 14px; font-weight: 600; }
+
+.perf-tag { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 6px; }
+.perf-tag.live { background: var(--green-dim); color: var(--green); }
+.perf-tag.pending { background: var(--orange-dim); color: var(--orange); }
+
+.meter-group { display: flex; flex-direction: column; gap: 16px; }
+.meter { display: flex; flex-direction: column; gap: 6px; }
+.meter-header { display: flex; justify-content: space-between; font-size: 13px; }
+.meter-label { color: var(--text-dim); }
+.meter-val { font-family: 'JetBrains Mono', monospace; font-weight: 600; font-size: 13px; }
+.meter-val.green { color: var(--green); }
+.meter-val.accent { color: var(--accent); }
+.meter-val.orange { color: var(--orange); }
+.meter-val.cyan { color: var(--cyan); }
+
+.meter-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+.meter-fill { height: 100%; border-radius: 3px; transition: width 1.5s ease; }
+.meter-fill.green { background: var(--green); }
+.meter-fill.accent { background: var(--accent); }
+.meter-fill.orange { background: var(--orange); }
+.meter-fill.cyan { background: var(--cyan); }
+
+/* ═══ SERVICES ═══ */
+.services-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+
+.service-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px 24px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.service-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; transition: opacity 0.3s ease; opacity: 0; }
+.service-card:hover::before { opacity: 1; }
+.service-card:hover { border-color: var(--border-light); transform: translateY(-3px); }
+
+.service-card.validator::before { background: linear-gradient(90deg, var(--accent), var(--green)); }
+.service-card.ftso::before { background: linear-gradient(90deg, var(--cyan), var(--accent)); }
+.service-card.fdc::before { background: linear-gradient(90deg, var(--orange), var(--cyan)); }
+
+.service-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 16px; }
+.service-card.validator .service-icon { background: var(--accent-dim); }
+.service-card.ftso .service-icon { background: var(--cyan-dim); }
+.service-card.fdc .service-icon { background: var(--orange-dim); }
+
+.service-title { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+.service-desc { font-size: 13px; color: var(--text-dim); line-height: 1.7; margin-bottom: 16px; }
+
+.service-features { display: flex; flex-wrap: wrap; gap: 6px; }
+.service-feat { font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 6px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); color: var(--text-dim); }
+
+/* ═══ DELEGATE ═══ */
+.delegate-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 32px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 32px;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.delegate-box::before {
+  content: '';
+  position: absolute;
+  top: -50%; right: -20%;
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(238,255,0,0.04), transparent 70%);
+  pointer-events: none;
+}
+
+.delegate-info h3 { font-size: 22px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.5px; }
+.delegate-info p { color: var(--text-dim); font-size: 14px; margin-bottom: 20px; max-width: 480px; }
+
+.delegate-meta {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.delegate-meta-item {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.delegate-meta-item strong {
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+}
+
+.address-box { display: flex; align-items: center; gap: 12px; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 16px; }
+.address-label { font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; white-space: nowrap; }
+.address-val { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--accent); word-break: break-all; }
+
+.copy-btn { background: var(--accent-dim); border: 1px solid rgba(238,255,0,0.2); color: var(--accent); padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; white-space: nowrap; transition: all var(--transition); font-family: 'DM Sans', sans-serif; }
+.copy-btn:hover { background: var(--accent); color: var(--bg); }
+
+.delegate-actions { display: flex; flex-direction: column; gap: 12px; }
+
+/* ═══ FOOTER ═══ */
+.footer { border-top: 1px solid var(--border); padding: 24px 32px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--text-muted); }
+.footer-links { display: flex; gap: 20px; }
+.footer-links a { color: var(--text-dim); text-decoration: none; transition: color var(--transition); }
+.footer-links a:hover { color: var(--accent); }
+
+/* ═══ ANIMATIONS ═══ */
+@keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+.animate-in { animation: fadeUp 0.5s ease forwards; opacity: 0; }
+.delay-1 { animation-delay: 0.1s; }
+.delay-2 { animation-delay: 0.2s; }
+.delay-3 { animation-delay: 0.3s; }
+.delay-4 { animation-delay: 0.4s; }
+
+/* ═══ SCROLLBAR ═══ */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
+
+/* ═══ TICKER ═══ */
+.ticker {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 10px 0;
+  overflow: hidden;
+  font-size: 12px;
+  color: var(--text-dim);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 24px;
+}
+.ticker-item { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.ticker-item strong { color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+.ticker-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--border-light); }
+
+/* ═══ RESPONSIVE ═══ */
+@media (max-width: 1024px) {
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .perf-grid, .services-grid { grid-template-columns: 1fr; }
+  .delegate-box { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 768px) {
+  .sidebar { transform: translateX(-100%); }
+  .sidebar.open { transform: translateX(0); }
+  .mobile-toggle { display: flex; }
+  .mobile-overlay.active { display: block; }
+  .main { margin-left: 0; }
+  .content { padding: 20px 16px; }
+  .topbar { padding: 0 16px; padding-left: 56px; }
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+  .stat-value { font-size: 22px; }
+  .delegate-meta { flex-wrap: wrap; gap: 12px; }
+  .footer { flex-direction: column; gap: 12px; text-align: center; }
+}
+
+@media (max-width: 480px) {
+  .stats-grid { grid-template-columns: 1fr; }
+  .topbar-right a:not(.btn) { display: none; }
+}
+</style>
+</head>
+<body>
+
+<button class="mobile-toggle" onclick="toggleSidebar()">
+  <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h14M3 10h14M3 14h14"/></svg>
+</button>
+
+<div class="mobile-overlay" onclick="toggleSidebar()"></div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="sidebar-logo">
+      <img src="logo.png" alt="Flare Strategies Logo" width="40" height="40">
+    </div>
+    <div class="sidebar-brand-text">
+      Flare Strategies
+      <span>Infrastructure Provider</span>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-label">Overview</div>
+    <a href="#dashboard" class="nav-item active">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </a>
+    <a href="#performance" class="nav-item">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Performance
+    </a>
+    <a href="#services" class="nav-item">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+      Services
+    </a>
+    <a href="#delegate" class="nav-item">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      Delegate
+      <span class="badge">LIVE</span>
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="sidebar-status">
+      <div class="status-dot"></div>
+      All systems operational
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="network-badge">Flare Mainnet</span>
+    </div>
+    <div class="topbar-right">
+      <a href="https://x.com/FlareStrategies" target="_blank">&#120143; Twitter</a>
+      <a href="https://flaremetrics.io" target="_blank">FlareMetrics</a>
+      <a href="https://portal.flare.network" target="_blank" class="btn btn-primary">Open Portal</a>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- TICKER -->
+    <div class="ticker animate-in">
+      <div class="ticker-item">Validator <strong>ACTIVE</strong></div>
+      <div class="ticker-dot"></div>
+      <div class="ticker-item">Uptime <strong>100.00%</strong></div>
+      <div class="ticker-dot"></div>
+      <div class="ticker-item">Self-bond <strong>1,000,000 FLR</strong></div>
+      <div class="ticker-dot"></div>
+      <div class="ticker-item">Fee <strong>10%</strong></div>
+      <div class="ticker-dot"></div>
+      <div class="ticker-item">FTSO <strong>ACTIVE</strong></div>
+      <div class="ticker-dot"></div>
+      <div class="ticker-item">FDC <strong id="tk-fdc">SYNCING</strong></div>
+      <div class="ticker-dot"></div>
+      <div class="ticker-item">Expires <strong>1 May 2026</strong></div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <section id="dashboard">
+      <div class="section-header">
+        <div>
+          <div class="section-title">Dashboard</div>
+          <div class="section-subtitle">Real-time validator & provider metrics</div>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card animate-in delay-1">
+          <div class="stat-label">
+            <svg fill="none" stroke="var(--accent)" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/></svg>
+            Self-bond Stake
+          </div>
+          <div class="stat-value accent">1.00M</div>
+          <div class="stat-change up">FLR staked</div>
+        </div>
+        <div class="stat-card animate-in delay-2">
+          <div class="stat-label">
+            <svg fill="none" stroke="var(--green)" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            Uptime
+          </div>
+          <div class="stat-value green">100.00%</div>
+          <div class="stat-change up">&#9650; min 80% required</div>
+        </div>
+        <div class="stat-card animate-in delay-3">
+          <div class="stat-label">
+            <svg fill="none" stroke="var(--cyan)" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            Delegation Fee
+          </div>
+          <div class="stat-value cyan">10%</div>
+          <div class="stat-change neutral">competitive rate</div>
+        </div>
+        <div class="stat-card animate-in delay-4">
+          <div class="stat-label">
+            <svg fill="none" stroke="var(--orange)" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+            Delegators
+          </div>
+          <div class="stat-value orange">0</div>
+          <div class="stat-change neutral">accepting delegations</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PERFORMANCE -->
+    <section id="performance">
+      <div class="section-header">
+        <div>
+          <div class="section-title">Performance</div>
+          <div class="section-subtitle">Service health & availability metrics</div>
+        </div>
+      </div>
+      <div class="perf-grid">
+        <div class="perf-card animate-in delay-1">
+          <div class="perf-card-header">
+            <div class="perf-card-title">Validator</div>
+            <span class="perf-tag live">&#9679; LIVE</span>
+          </div>
+          <div class="meter-group">
+            <div class="meter"><div class="meter-header"><span class="meter-label">Uptime</span><span class="meter-val green">100.00%</span></div><div class="meter-bar"><div class="meter-fill green" style="width:100%"></div></div></div>
+            <div class="meter"><div class="meter-header"><span class="meter-label">Self-bond</span><span class="meter-val accent">1,000,000 FLR</span></div><div class="meter-bar"><div class="meter-fill accent" style="width:100%"></div></div></div>
+            <div class="meter"><div class="meter-header"><span class="meter-label">Capacity used</span><span class="meter-val cyan">6.7%</span></div><div class="meter-bar"><div class="meter-fill cyan" style="width:6.7%"></div></div></div>
+            <div class="meter"><div class="meter-header"><span class="meter-label">Validator connectivity</span><span class="meter-val green">99.1%</span></div><div class="meter-bar"><div class="meter-fill green" style="width:99.1%"></div></div></div>
+          </div>
+        </div>
+        <div class="perf-card animate-in delay-2">
+          <div class="perf-card-header">
+            <div class="perf-card-title">FTSO & FDC</div>
+            <span class="perf-tag live">&#9679; ACTIVE</span>
+          </div>
+          <div class="meter-group">
+            <div class="meter"><div class="meter-header"><span class="meter-label">FTSO data feeds</span><span class="meter-val green">64 active</span></div><div class="meter-bar"><div class="meter-fill green" style="width:100%"></div></div></div>
+            <div class="meter"><div class="meter-header"><span class="meter-label">FTSO submission rate</span><span class="meter-val accent">Submitting</span></div><div class="meter-bar"><div class="meter-fill accent" style="width:85%"></div></div></div>
+            <div class="meter"><div class="meter-header"><span class="meter-label">FDC indexer sync</span><span class="meter-val orange" id="m-fdc">57%</span></div><div class="meter-bar"><div class="meter-fill orange" id="m-fdc-bar" style="width:57%"></div></div></div>
+            <div class="meter"><div class="meter-header"><span class="meter-label">FDC full sync ETA</span><span class="meter-val orange" id="m-fdc-eta">~6 Mar 2026</span></div><div class="meter-bar"><div class="meter-fill orange" style="width:57%"></div></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SERVICES -->
+    <section id="services">
+      <div class="section-header">
+        <div>
+          <div class="section-title">Services</div>
+          <div class="section-subtitle">Full-stack Flare infrastructure</div>
+        </div>
+      </div>
+      <div class="services-grid">
+        <div class="service-card validator animate-in delay-1">
+          <div class="service-icon">&#9935;&#65039;</div>
+          <div class="service-title">Validator</div>
+          <div class="service-desc">Securing Flare through Snowman++ consensus. 1M FLR self-bonded with 24/7 monitoring and redundant connectivity.</div>
+          <div class="service-features">
+            <span class="service-feat">1M FLR self-bond</span>
+            <span class="service-feat">10% fee</span>
+            <span class="service-feat">24/7 monitoring</span>
+          </div>
+        </div>
+        <div class="service-card ftso animate-in delay-2">
+          <div class="service-icon">&#128202;</div>
+          <div class="service-title">FTSO Data Provider</div>
+          <div class="service-desc">Delivering accurate price feeds to the Flare network. Multi-source data aggregation across 64 active feeds with low-latency submissions.</div>
+          <div class="service-features">
+            <span class="service-feat">64 active feeds</span>
+            <span class="service-feat">Multi-source</span>
+            <span class="service-feat">Fast Updates</span>
+          </div>
+        </div>
+        <div class="service-card fdc animate-in delay-3">
+          <div class="service-icon">&#128279;</div>
+          <div class="service-title">FDC Attestation</div>
+          <div class="service-desc">Cross-chain data verification through the Flare Data Connector. Enabling trustless proof of external blockchain events.</div>
+          <div class="service-features">
+            <span class="service-feat">Cross-chain proofs</span>
+            <span class="service-feat">C-chain indexer</span>
+            <span class="service-feat">Auto-sync</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DELEGATE -->
+    <section id="delegate">
+      <div class="section-header">
+        <div>
+          <div class="section-title">Delegate to Flare Strategies</div>
+          <div class="section-subtitle">Support network decentralization and earn staking rewards</div>
+        </div>
+      </div>
+      <div class="delegate-box animate-in">
+        <div class="delegate-info">
+          <h3>Earn rewards by delegating FLR</h3>
+          <p>Delegate your FLR tokens to Flare Strategies. We run dedicated infrastructure with 24/7 monitoring, redundant connectivity, and a competitive 10% fee. Your delegation supports Flare's decentralization.</p>
+          <div class="delegate-meta">
+            <div class="delegate-meta-item">Fee: <strong>10%</strong></div>
+            <div class="delegate-meta-item">Self-bond: <strong>1,000,000 FLR</strong></div>
+            <div class="delegate-meta-item">Expires: <strong>1 May 2026</strong></div>
+          </div>
+          <div class="address-box">
+            <div>
+              <div class="address-label">Delegation Address</div>
+              <div class="address-val" id="del-address">0x457464F9390Ebc5217cfeFcBCEd3f1562A0379B2</div>
+            </div>
+            <button class="copy-btn" onclick="copyAddress()">Copy</button>
+          </div>
+        </div>
+        <div class="delegate-actions">
+          <a href="https://portal.flare.network" target="_blank" class="btn btn-primary" style="justify-content:center">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            Flare Portal
+          </a>
+          <a href="https://portal.flare.network" target="_blank" class="btn btn-outline" style="justify-content:center">How to delegate &rarr;</a>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div>Flare Strategies &#9672; 2026 &#9672; Built in Italy &#127470;&#127481;</div>
+      <div class="footer-links">
+        <a href="https://x.com/FlareStrategies" target="_blank">Twitter</a>
+        <a href="https://flaremetrics.io" target="_blank">FlareMetrics</a>
+        <a href="https://portal.flare.network" target="_blank">Flare Portal</a>
+      </div>
+    </footer>
+  </div>
+</div>
+
+<script>
+function toggleSidebar() {
+  document.querySelector('.sidebar').classList.toggle('open');
+  document.querySelector('.mobile-overlay').classList.toggle('active');
+}
+
+function copyAddress() {
+  const addr = document.getElementById('del-address').textContent;
+  navigator.clipboard.writeText(addr).then(() => {
+    const btn = document.querySelector('.copy-btn');
+    btn.textContent = 'Copied!';
+    btn.style.background = 'var(--green)';
+    btn.style.color = 'var(--bg)';
+    setTimeout(() => { btn.textContent = 'Copy'; btn.style.background = ''; btn.style.color = ''; }, 2000);
+  });
+}
+
+const sections = document.querySelectorAll('section');
+const navItems = document.querySelectorAll('.nav-item');
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(s => { if (window.scrollY >= s.offsetTop - 100) current = s.getAttribute('id'); });
+  navItems.forEach(item => { item.classList.remove('active'); if (item.getAttribute('href') === '#' + current) item.classList.add('active'); });
+});
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => { if (entry.isIntersecting) entry.target.style.animationPlayState = 'running'; });
+}, { threshold: 0.1 });
+document.querySelectorAll('.animate-in').forEach(el => { el.style.animationPlayState = 'paused'; observer.observe(el); });
+
+function updateFDC() {
+  const target = new Date('2026-03-06T00:00:00');
+  const start = new Date('2026-02-20T00:00:00');
+  const now = new Date();
+  const pct = Math.min(100, Math.round(((now - start) / (target - start)) * 100));
+  const fdcEl = document.getElementById('m-fdc');
+  const fdcBar = document.getElementById('m-fdc-bar');
+  if (fdcEl) fdcEl.textContent = pct + '%';
+  if (fdcBar) fdcBar.style.width = pct + '%';
+  if (pct >= 100) {
+    const tkFdc = document.getElementById('tk-fdc');
+    if (tkFdc) { tkFdc.textContent = 'ACTIVE'; tkFdc.style.color = 'var(--green)'; }
+    const etaEl = document.getElementById('m-fdc-eta');
+    if (etaEl) etaEl.textContent = 'Synced!';
+    if (fdcEl) { fdcEl.textContent = '100%'; fdcEl.className = 'meter-val green'; }
+    if (fdcBar) { fdcBar.className = 'meter-fill green'; fdcBar.style.width = '100%'; }
+  }
+}
+updateFDC();
+setInterval(updateFDC, 60000);
+
+navItems.forEach(item => {
+  item.addEventListener('click', () => {
+    document.querySelector('.sidebar').classList.remove('open');
+    document.querySelector('.mobile-overlay').classList.remove('active');
+  });
+});
+</script>
+</body>
+</html>
